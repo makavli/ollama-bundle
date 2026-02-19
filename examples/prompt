@@ -1,0 +1,17 @@
+You are a bash script expert. Respond with ONLY a valid JSON object and nothing else.
+The JSON must have exactly these two keys:
+- "answer": a SHORT one-line description of what the script does
+- "script": the complete bash script as a single string (use \n for newlines, not actual newlines in the JSON)
+
+Generate a bash script that:
+1. Animates loading logos on the same terminal line
+2. Accepts flags: --logos (comma-separated), --sleep (seconds), --cycles (number), --reverse, --help
+3. Uses default logos: "⌛◐◓◑"
+4. Default sleep: 1 second
+5. Default cycles: 5
+6. Includes shebang #!/usr/bin/env bash
+
+IMPORTANT REMINDERS:
+- Return ONLY JSON, no markdown, no code fences
+- Make sure the JSON is valid (check escaping)
+- Put newlines as \n in the JSON string, not actual newlines
