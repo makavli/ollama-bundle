@@ -1,6 +1,6 @@
 # Ollama Bundle - Local AI Development Suite
 
-A comprehensive, production-ready bundle for deploying and working with local LLMs using Ollama.
+A comprehensive, bundle for deploying and working with local LLMs using Ollama.
 
 ![Structure](https://img.shields.io/badge/structure-organized-brightgreen) ![Status](https://img.shields.io/badge/status-production--ready-blue) ![Python](https://img.shields.io/badge/python-3.7+-blue)
 
