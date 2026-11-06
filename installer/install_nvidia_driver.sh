@@ -3,6 +3,10 @@
 # Based on official NVIDIA documentation
 # https://docs.nvidia.com/datacenter/tesla/driver-installation-guide/ubuntu.html
 
+# Fail if any command in a pipeline fails (the "| tail" calls below used to hide
+# apt-get errors, so the script printed success even when installs failed)
+set -o pipefail
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -53,16 +57,16 @@ echo "STEP 1: Installing dependencies..."
 apt-get update
 apt-get install -y \
     build-essential \
-    linux-headers-$(uname -r) \
+    "linux-headers-$(uname -r)" \
     dkms \
     lsb-release \
-    2>&1 | tail -5
+    2>&1 | tail -5 || { echo -e "${RED}❌ Installing dependencies failed${NC}"; exit 1; }
 echo -e "${GREEN}✓ Dependencies installed${NC}"
 echo ""
 
 # Step 2: Install ubuntu-drivers
 echo "STEP 2: Setting up driver tools..."
-apt-get install -y ubuntu-drivers-common 2>&1 | tail -3
+apt-get install -y ubuntu-drivers-common 2>&1 | tail -3 || { echo -e "${RED}❌ Installing ubuntu-drivers-common failed${NC}"; exit 1; }
 echo -e "${GREEN}✓ Driver tools installed${NC}"
 echo ""
 
@@ -76,7 +80,7 @@ echo "STEP 4: Installing NVIDIA driver (this may take 2-3 minutes)..."
 if ubuntu-drivers autoinstall 2>&1 | tail -10; then
     echo -e "${GREEN}✓ Driver installation initiated${NC}"
 else
-    echo -e "${YELLOW}⚠ Driver autoinstall completed${NC}"
+    echo -e "${YELLOW}⚠ ubuntu-drivers autoinstall reported an error - see the output above${NC}"
 fi
 echo ""
 

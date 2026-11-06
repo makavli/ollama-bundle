@@ -8,7 +8,7 @@ System installation and configuration scripts.
 - `prepare_install.sh` - System preparation
 - `install_nvidia_driver.sh` - GPU driver setup
 - `setup_vs_code_ai.sh` - VS Code integration
-- `runGUI.sh` - Start OpenWebUI
+- `runGUI.sh` - Run prepare_install + setup_all in one go (arguments are passed to setup_all.py)
 
 ## Quick Start
 
@@ -25,9 +25,9 @@ bash runGUI.sh
 Control service ports and endpoints:
 
 ```bash
-# Ollama service endpoint (used inside container)
-export OLLAMA_HOST=0.0.0.0          # Default: host.docker.internal
-export OLLAMA_PORT=11434             # Default: 11434
+# Ollama URL as seen from the OpenWebUI container
+export OPENWEBUI_OLLAMA_URL=http://host.docker.internal:11434   # default (bridged)
+# ...or skip networking issues entirely:  sudo python3 setup_all.py --host-network
 
 # OpenWebUI web server port
 export OPENWEBUI_PORT=3000           # Default: 3000
@@ -38,15 +38,18 @@ python3 setup_all.py
 
 ### Resource Configuration
 
-Control Ollama performance:
+Ollama's performance settings live in its systemd service. Exporting them in
+your shell does nothing, because `setup_all.py` restarts Ollama through systemd:
 
 ```bash
-export OLLAMA_NUM_THREAD=8              # CPU threads (default: varies)
-export OLLAMA_GPU_MEMORY=14000          # GPU VRAM (MB, default: auto)
-export OLLAMA_MAX_LOADED_MODELS=2       # Concurrent models (default: 1)
-
-python3 setup_all.py
+sudo systemctl edit ollama
+# [Service]
+# Environment="OLLAMA_MAX_LOADED_MODELS=2"   # concurrent models
+# Environment="OLLAMA_NUM_PARALLEL=2"        # parallel requests per model
+sudo systemctl restart ollama
 ```
+
+`setup_all.py` keeps this override file unless you pass `--reset-ollama-override`.
 
 ### Service Endpoints After Setup
 
