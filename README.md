@@ -2,7 +2,7 @@
 
 A comprehensive, bundle for deploying and working with local LLMs using Ollama.
 
-![Structure](https://img.shields.io/badge/structure-organized-brightgreen) ![Status](https://img.shields.io/badge/status-production--ready-blue) ![Python](https://img.shields.io/badge/python-3.7+-blue)
+![Structure](https://img.shields.io/badge/structure-organized-brightgreen) ![CI](https://github.com/makavli/ollama-bundle/actions/workflows/ci-cd.yml/badge.svg) ![Python](https://img.shields.io/badge/python-3.9+-blue)
 
 ## 📦 What's Included
 
@@ -36,20 +36,6 @@ python3 setup_all.py
 bash runGUI.sh
 ```
 
-### 📊 Benchmarks (`benchmarks/`)
-Performance testing and comparison tools for models.
-
-- Model loading benchmarks
-- Response time measurements
-- Memory usage tracking
-- Throughput analysis
-
-**Quick Start:**
-```bash
-cd benchmarks
-python3 bench.py --model deepseek-coder-v2 --iterations 10
-```
-
 ### 📝 Examples (`examples/`)
 Sample prompts and configuration templates.
 
@@ -75,7 +61,7 @@ Comprehensive guides and technical references.
 ### Prerequisites
 - Ubuntu/Debian-based system
 - Docker (for OpenWebUI)
-- Python 3.7+
+- Python 3.9+
 - 8GB+ RAM (16GB+ recommended for GPU models)
 
 ### 1. System Setup
@@ -108,14 +94,12 @@ ollama-bundle/
 ├── ollama-cli/          # CLI tool for code generation
 │   ├── lib/             # OllamaClient library
 │   ├── src/             # Main application
+│   ├── tests/           # Unit tests (no Ollama needed)
 │   └── README.md
 ├── installer/           # Setup & installation scripts
 │   ├── setup_all.py
 │   ├── prepare_install.sh
-│   └── README.md
-├── benchmarks/          # Performance testing
-│   ├── bench.py
-│   ├── bench_deepseek.py
+│   ├── test_setup_all.py
 │   └── README.md
 ├── examples/            # Sample prompts & configs
 │   ├── prompt
@@ -138,12 +122,12 @@ ollama-bundle/
 ### For Developers
 1. Check `ollama-cli/lib/client.py` for API
 2. Explore `examples/` for prompt patterns
-3. Review `benchmarks/` for performance testing
+3. Run the tests: `python -m unittest discover -s ollama-cli/tests`
 
 ### For System Admins
 1. Run `installer/prepare_install.sh`
 2. Configure with `docs/README_install_openwebui.md`
-3. Monitor with `benchmarks/bench.py`
+3. Check status with `python3 ollama-cli/src/ollama_vs_code.py --check`
 
 ## ⚙️ Configuration
 
@@ -166,9 +150,8 @@ python3 src/ollama_vs_code.py --model llama3 "Your prompt"
 export OLLAMA_URL=http://192.168.1.100:11434
 python3 src/ollama_vs_code.py "Your prompt"
 
-# Or set host and port separately
+# Or point at a host (Ollama's own OLLAMA_HOST format works too, e.g. 0.0.0.0:11434)
 export OLLAMA_HOST=192.168.1.100
-export OLLAMA_PORT=11434
 python3 src/ollama_vs_code.py "Your prompt"
 ```
 
@@ -180,20 +163,31 @@ python3 src/ollama_vs_code.py "Your prompt"
 
 ### Setup & Installation Configuration (`installer/`)
 
-The setup scripts read these environment variables:
+`setup_all.py` options (run `python3 installer/setup_all.py --help`):
 
 ```bash
-# Ollama service binding (for container communication)
-export OLLAMA_HOST=0.0.0.0              # Listen on all interfaces (default: host.docker.internal)
-export OLLAMA_PORT=11434                # Ollama API port (default: 11434)
+sudo python3 installer/setup_all.py                  # default models, bridged container
+sudo python3 installer/setup_all.py --host-network   # works with Ollama's default 127.0.0.1 binding
+sudo python3 installer/setup_all.py --port 8080 llama3:latest
+```
 
-# OpenWebUI configuration
-export OPENWEBUI_PORT=3000              # Web UI port (default: 3000)
+| Option / variable | Meaning |
+|---|---|
+| `--port` / `OPENWEBUI_PORT` | OpenWebUI port (default 3000) |
+| `--ollama-url` / `OPENWEBUI_OLLAMA_URL` | Ollama URL as seen *from the container* |
+| `--host-network` | run OpenWebUI on the host network (no Ollama config change needed) |
+| `--reset-ollama-override` | delete your Ollama systemd override (off by default) |
 
-# Ollama resource limits (systemd)
-export OLLAMA_NUM_THREAD=8              # CPU threads for inference
-export OLLAMA_GPU_MEMORY=14000          # GPU memory allocation (MB)
-export OLLAMA_MAX_LOADED_MODELS=2       # Max concurrent loaded models
+Ollama's own settings (listen address, threads, loaded models) belong in its
+systemd service, not in your shell - `setup_all.py` restarts Ollama through systemd,
+which never sees variables exported in your terminal:
+
+```bash
+sudo systemctl edit ollama
+# [Service]
+# Environment="OLLAMA_HOST=0.0.0.0"          # needed for a bridged OpenWebUI container
+# Environment="OLLAMA_MAX_LOADED_MODELS=2"
+sudo systemctl restart ollama
 ```
 
 ### Accessing Services Locally
@@ -207,8 +201,9 @@ export OLLAMA_MAX_LOADED_MODELS=2       # Max concurrent loaded models
 For remote access (e.g., from another machine):
 
 ```bash
-# Make Ollama accessible on your network IP
-export OLLAMA_HOST=0.0.0.0:11434
+# Make Ollama accessible on your network IP (in its systemd service, see above):
+#   Environment="OLLAMA_HOST=0.0.0.0:11434"
+# Only do this on a trusted network: the Ollama API has no authentication.
 
 # Then access from remote machine:
 # http://YOUR_MACHINE_IP:11434   (Ollama API)
@@ -320,9 +315,8 @@ For issues and questions:
 ✅ CLI for automation and scripting  
 ✅ GPU acceleration support  
 ✅ Multiple model support  
-✅ Performance benchmarking  
 ✅ VS Code integration  
-✅ Production-ready architecture  
+✅ Tested CLI and installer (CI on every push)  
 ✅ Comprehensive documentation  
 
 ---

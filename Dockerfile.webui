@@ -1,25 +1,15 @@
 FROM ghcr.io/open-webui/open-webui:main
 
-LABEL maintainer="Ollama Bundle Contributors"
-LABEL description="OpenWebUI container optimized for Ollama local LLM integration"
-LABEL org.opencontainers.image.source="https://github.com/makadorian/ollama-bundle"
+LABEL description="OpenWebUI container preconfigured for a local Ollama server" \
+      org.opencontainers.image.source="https://github.com/makavli/ollama-bundle"
 
-# Build arguments
-ARG OLLAMA_URL=http://host.docker.internal:11434
-ARG OLLAMA_HOST=host.docker.internal
-ARG OLLAMA_PORT=11434
-ARG WEBUI_PORT=3000
-
-# Set environment variables
-ENV OLLAMA_URL=${OLLAMA_URL}
-ENV OLLAMA_HOST=${OLLAMA_HOST}
-ENV OLLAMA_PORT=${OLLAMA_PORT}
-ENV WEBUI_PORT=${WEBUI_PORT}
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD curl -f http://localhost:8080/api/health || exit 1
+# OpenWebUI reads OLLAMA_BASE_URL to find Ollama. Override at runtime with
+#   docker run -e OLLAMA_BASE_URL=http://<host>:11434 ...
+ENV OLLAMA_BASE_URL=http://host.docker.internal:11434
 
 EXPOSE 8080
 
-CMD ["sh", "-c", "echo 'OpenWebUI is running' && echo 'Backend: $OLLAMA_URL' && node /app/build/index.js"]
+# The base image's own entrypoint/CMD starts OpenWebUI's Python backend,
+# so no CMD override here (the previous `node /app/build/index.js` could not start it).
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -fsS http://localhost:8080/health || exit 1

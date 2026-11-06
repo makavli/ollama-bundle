@@ -1,7 +1,10 @@
-# (optional) install prerequisites
-sudo ./prepare_install.sh
+#!/usr/bin/env bash
+# Install prerequisites (once), then set up Ollama models + the OpenWebUI container.
+# Any arguments are passed on to setup_all.py, e.g.:
+#   ./runGUI.sh --host-network
+#   ./runGUI.sh llama3:latest deepseek-coder-v2:latest
+set -euo pipefail
+cd "$(dirname "$0")"
 
-# run the orchestrator (sudo required for docker/systemd ops)
-sudo ./setup_all.py
-# or to pull specific models:
-sudo ./setup_all.py deepseek-coder-v2:latest llama3:latest deepseek-v2:latest other:model
+sudo ./prepare_install.sh
+sudo python3 ./setup_all.py "$@"
